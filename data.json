@@ -1,0 +1,96 @@
+{
+    "users": {
+        "asdf": {
+            "alg": "pbkdf2_sha256",
+            "iterations": 100000,
+            "salt": "iEz7m6hA22834mSEdFtk7w==",
+            "hash": "Fp2exouVQD+1yLlm4tGjvPrRbQOnqzsWIejXwvrRm+Q=",
+            "role": "Staff",
+            "bg_color": "#f0f4f7",
+            "created_by": "system",
+            "class_code": "ZPWB0S"
+        },
+        "33682": {
+            "alg": "pbkdf2_sha256",
+            "iterations": 100000,
+            "salt": "+0cKxn6bbE1ogHIf1LglXQ==",
+            "hash": "d56zhzANOPvk0chjbe0OEhN2q3rQEerqJe5+6stevy4=",
+            "role": "Student",
+            "bg_color": "#f0f4f7",
+            "created_by": "system"
+        },
+        "admin": {
+            "alg": "pbkdf2_sha256",
+            "iterations": 100000,
+            "salt": "p7bPNk2ScB2EjkX3Mcdqcg==",
+            "hash": "PccytLWK/rERkXDD8KL+WVI8hWFze6xTIGZQpLu0wg8=",
+            "role": "Admin",
+            "bg_color": "#f0f4f7",
+            "created_by": "system"
+        },
+        "1234": {
+            "password": "asdfasdf",
+            "role": "student",
+            "owner": "asdf"
+        },
+        "12345": {
+            "password": "789456123",
+            "role": "student",
+            "owner": "asdf"
+        }
+    },
+    "students": {
+        "asdf": {
+            "33682": {
+                "roll_no": "33682",
+                "name": "Nathan",
+                "class": "ZPWB0S",
+                "contact": "1234567890",
+                "address": "9631",
+                "gender": "Male",
+                "dob": "2025-12-11",
+                "courses": []
+            },
+            "123456": {
+                "roll_no": "123456",
+                "name": "Wynn",
+                "class": "ZPWB0S",
+                "contact": "3326549870",
+                "address": "5640",
+                "gender": "Male",
+                "dob": "2025-12-11",
+                "courses": []
+            },
+            "1234": {
+                "roll_no": "1234",
+                "name": "asdasd",
+                "class": "ZPWB0S",
+                "contact": "9876543210",
+                "address": "5564",
+                "gender": "Male",
+                "dob": "2025-12-11",
+                "courses": []
+            },
+            "12345": {
+                "roll_no": "12345",
+                "name": "adfg",
+                "class": "ZPWB0S",
+                "contact": "0000",
+                "address": "2222",
+                "gender": "Female",
+                "dob": "2025-12-11",
+                "courses": []
+            }
+        }
+    },
+    "sessions": {
+        "asdf": [
+            {
+                "student": "33682",
+                "date": "2025-12-08",
+                "time": "12:30",
+                "status": "Accepted"
+            }
+        ]
+    }
+}
