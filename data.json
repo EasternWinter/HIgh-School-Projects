@@ -22,8 +22,8 @@
         "admin": {
             "alg": "pbkdf2_sha256",
             "iterations": 100000,
-            "salt": "p7bPNk2ScB2EjkX3Mcdqcg==",
-            "hash": "PccytLWK/rERkXDD8KL+WVI8hWFze6xTIGZQpLu0wg8=",
+            "salt": "AURtIhqzS5/35O1kxgcL4A==",
+            "hash": "TD7EnsqHtbNFjAxBZBmuZIcCm8PQTRTcFPk8hzuAchw=",
             "role": "Admin",
             "bg_color": "#f0f4f7",
             "created_by": "system"
@@ -36,6 +36,16 @@
             "role": "Student",
             "class_code": "ZPWB0S",
             "created_by": "asdf"
+        },
+        "12": {
+            "alg": "pbkdf2_sha256",
+            "iterations": 100000,
+            "salt": "ivoC09vJuYuNd84WimObmQ==",
+            "hash": "ZmY+F1OJbJYii97wvWHIkwPkhD5BForwrcvf3HWAWVw=",
+            "role": "Student",
+            "class_code": "ZPWB0S",
+            "created_by": "asdf",
+            "bg_color": "#f0f4f7"
         }
     },
     "students": {
@@ -57,6 +67,16 @@
                 "contact": "1234567890",
                 "address": "1234",
                 "gender": "Male",
+                "dob": "2025-12-15",
+                "courses": []
+            },
+            "12": {
+                "roll_no": "12",
+                "name": "asdf",
+                "class": "ZPWB0S",
+                "contact": "1234567890",
+                "address": "3216",
+                "gender": "Others",
                 "dob": "2025-12-15",
                 "courses": []
             }

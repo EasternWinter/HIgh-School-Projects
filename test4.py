@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, colorchooser
 import json
-import glob
 import os
 import hashlib
 import base64
@@ -129,9 +128,6 @@ class User:
             json.dump(data, f, indent=4, ensure_ascii=False)
         os.replace(temp, DATA_FILE)
 
-    #Load initial data into memory
-    data = load_all.__func__()
-
     #Utility
     @staticmethod
     def generate_class_code():
@@ -140,7 +136,7 @@ class User:
     #User Management
     @staticmethod
     def register(username, password, role, created_by="system"):
-        data = User.data
+        data = User.load_all()
 
         if username in data["users"]:
             return False, "Username already exists!"
@@ -162,11 +158,13 @@ class User:
 
     @staticmethod
     def get_role(username):
-        return User.data["users"].get(username, {}).get("role", "Staff")
+        data = User.load_all()
+        return data["users"].get(username, {}).get("role", "Staff")
 
     @staticmethod
     def login(username, password):
-        stored = User.data["users"].get(username)
+        data = User.load_all()
+        stored = data["users"].get(username)
         if stored is None:
             return False, "Invalid username or password!"
 
@@ -178,18 +176,21 @@ class User:
     #Theme
     @staticmethod
     def get_theme(username):
-        return User.data["users"].get(username, {}).get("theme", "light")
+        data = User.load_all()
+        return data["users"].get(username, {}).get("theme", "light")
 
     @staticmethod
     def set_theme(username, theme):
-        if username in User.data["users"]:
-            User.data["users"][username]["theme"] = theme
-            User.save_all(User.data)
+        data = User.load_all()
+        if username in data["users"]:
+            data["users"][username]["theme"] = theme
+            User.save_all(data)
 
     #Staff / Class Code
     @staticmethod
     def get_staff_by_class_code(class_code):
-        for username, udata in User.data["users"].items():
+        data = User.load_all()
+        for username, udata in data["users"].items():
             if udata.get("role") == "Staff" and udata.get("class_code") == class_code:
                 return username
         return None
@@ -197,12 +198,14 @@ class User:
     #Student Data
     @staticmethod
     def get_students(staff_username):
-        students = User.data["students"].get(staff_username, {})
+        data = User.load_all()
+        students = data["students"].get(staff_username, {})
         return {roll: Student.from_dict(s) for roll, s in students.items()}
 
     @staticmethod
     def get_student_record(username):
-        for staff, students in User.data["students"].items():
+        data = User.load_all()
+        for staff, students in data["students"].items():
             for roll_no, s in students.items():
                 if roll_no == username:
                     s["birthday"] = s.get("dob")
@@ -211,7 +214,7 @@ class User:
 
     @staticmethod
     def save_students(staff_username, students):
-        data = User.data
+        data = User.load_all()
 
         #Convert Student objects → dicts
         data["students"][staff_username] = {
@@ -224,7 +227,7 @@ class User:
     @staticmethod
     def get_sessions(staff):
         data = User.load_all()
-        return User.data["sessions"].get(staff, [])
+        return data["sessions"].get(staff, [])
 
     @staticmethod
     def is_slot_available(staff, date, time):
@@ -235,7 +238,7 @@ class User:
 
     @staticmethod
     def book_session(staff, student, date, time):
-        data = User.data
+        data = User.load_all()
         data["sessions"].setdefault(staff, [])
 
         data["sessions"][staff].append({
@@ -249,8 +252,9 @@ class User:
 
     @staticmethod
     def get_student_bookings(student):
+        data = User.load_all()
         results = []
-        for staff, sessions in User.data["sessions"].items():
+        for staff, sessions in data["sessions"].items():
             for s in sessions:
                 if s["student"] == student:
                     results.append(s)
@@ -393,7 +397,7 @@ class StudentRegisterWindow(tk.Toplevel):
             return
 
         # Save student data
-        student_class = User.data["users"][staff_user].get("class_code", "N/A")
+        student_class = data["users"][staff_user].get("class_code", "N/A")
         student = Student(
             roll_no=roll_no,
             name=data["name"],
@@ -694,6 +698,7 @@ class ForgotPasswordWindow(tk.Toplevel):
         self.show_confirm_password = not self.show_confirm_password
 
     def reset_password(self):
+        data = User.load_all()
         username = self.username_ent.get().strip()
         password = self.password_ent.get()
         confirm_password = self.confirm_password_ent.get()
@@ -702,7 +707,7 @@ class ForgotPasswordWindow(tk.Toplevel):
             messagebox.showerror("Error", "All fields are required!")
             return
 
-        if username not in User.data["users"]:
+        if username not in data["users"]:
             messagebox.showerror("Error", "Username does not exist!")
             return
 
@@ -710,8 +715,8 @@ class ForgotPasswordWindow(tk.Toplevel):
             messagebox.showerror("Error", "Passwords do not match!")
             return
 
-        User.data["users"][username].update(hash_password(password))
-        User.save_all()
+        data["users"][username].update(hash_password(password))
+        User.save_all(data)
         messagebox.showinfo("Success", "Password reset successful!")
         self.destroy()
 
@@ -886,6 +891,7 @@ class StudentPage(tk.Tk):
 #Staff Page
 class StaffPage(tk.Tk):
     def __init__(self, username):
+        data = User.load_all()
         self.bg_color = load_bg_color()
         super().__init__()
         self.username = username
@@ -901,7 +907,7 @@ class StaffPage(tk.Tk):
                              relief=tk.GROOVE, bg=self.bg_color)
         self.title_label.pack(side=tk.TOP, fill=tk.X)
 
-        code = tk.Label(self.title_frame, text=f"Class Code: {User.data['users'][username].get('class_code', 'N/A')}",
+        code = tk.Label(self.title_frame, text=f"Class Code: {data['users'][username].get('class_code', 'N/A')}",
                         font=("Times New Roman", 13), bg=self.bg_color)
         code.pack(side=tk.LEFT, padx=10, pady=10)
 
@@ -968,9 +974,8 @@ class StaffPage(tk.Tk):
             selected = tree.selection()
             if not selected:
                 return
-            item = tree.item(selected[0])
-            student, date, time, _ = item["values"]
-            self.update_session_status(filename, student, date, time, "Accepted")
+            student, date, time, _ = tree.item(selected[0])["values"]
+            self.update_session_status(student, date, time, "Accepted")
             tree.item(selected[0], values=(student, date, time, "Accepted"))
 
         def decline():
@@ -987,17 +992,22 @@ class StaffPage(tk.Tk):
         tk.Button(btn_frame, text="Accept", bg="green", fg="white", width=12, command=accept).pack(side=tk.LEFT, padx=5)
         tk.Button(btn_frame, text="Decline", bg="red", fg="white", width=12, command=decline).pack(side=tk.LEFT, padx=5)
 
-    def update_session_status(self, filename, student, date, time, new_status):
+    def update_session_status(self, student, date, time, new_status):
         data = User.load_all()
 
-        session_list = data["sessions"].get(self.username, [])
+        student = str(student).strip()
+        date = str(date).strip()
+        time = str(time).strip()
 
-        for s in session_list:
-            if s["student"] == student and s["date"] == date and s["time"] == time:
+        for s in data.get("sessions", {}).get(self.username, []):
+            if (
+                str(s["student"]).strip() == student and
+                str(s["date"]).strip() == date and
+                str(s["time"]).strip() == time
+            ):
                 s["status"] = new_status
                 break
 
-        User.data = data
         User.save_all(data)
     
     def search_students(self, event=None):
@@ -1017,12 +1027,13 @@ class StaffPage(tk.Tk):
         LoginRegister()
 
     def create_entry_widgets(self):
-        labels = ["Roll No", "Name", "Class", "Contact", "Address", "Gender", "Birthday"]
+        labels = ["Roll No", "Name", "Class", "Contact", "Address", "Gender", "Birthday", "Password"]
         self.entries = {}
         self.entry_labels = {}
 
         for i, label in enumerate(labels):
-            lbl = tk.Label(self.detail_frame, text=label, font=("Times New Roman", 17), bg=self.bg_color)
+            lbl = tk.Label(self.detail_frame, text=label,
+                        font=("Times New Roman", 17), bg=self.bg_color)
             lbl.grid(row=i, column=0, padx=2, pady=2)
             self.entry_labels[label.lower().replace(" ", "_")] = lbl
 
@@ -1035,14 +1046,18 @@ class StaffPage(tk.Tk):
                     self.detail_frame,
                     font=("Times New Roman", 15),
                     width=15,
-                    background='darkblue',
-                    foreground='white',
-                    borderwidth=2,
                     date_pattern='yyyy-mm-dd',
                     maxdate=date.today()
                 )
+
+            elif label == "Password":
+                entry = tk.Entry(self.detail_frame, bd=7,
+                                font=("Times New Roman", 17),
+                                width=12, show="*")
+
             else:
-                entry = tk.Entry(self.detail_frame, bd=7, font=("Times New Roman", 17), width=12)
+                entry = tk.Entry(self.detail_frame, bd=7,
+                                font=("Times New Roman", 17), width=12)
 
             entry.grid(row=i, column=1, padx=2, pady=2)
             self.entries[label.lower().replace(" ", "_")] = entry
@@ -1079,13 +1094,17 @@ class StaffPage(tk.Tk):
 
     def add_student(self):
         roll_no = self.entries['roll_no'].get().strip()
-        if not roll_no:
-            messagebox.showerror("Error", "Roll No is required")
+        password = self.entries['password'].get().strip()
+
+        if not roll_no or not password:
+            messagebox.showerror("Error", "Roll No and Password are required")
             return
+
         if roll_no in self.students:
             messagebox.showerror("Error", "Student already exists")
             return
 
+        # Create student profile
         student = Student(
             roll_no,
             self.entries['name'].get().strip(),
@@ -1095,11 +1114,33 @@ class StaffPage(tk.Tk):
             self.entries['gender'].get().strip(),
             self.entries['birthday'].get().strip()
         )
+
         self.students[roll_no] = student
         User.save_students(self.username, self.students)
+
+        #Create encrypted student account
+        data = User.load_all()
+        if "users" not in data:
+            data["users"] = {}
+
+        password_data = hash_password(password)
+
+        data["users"][roll_no] = {
+            **password_data,
+            "role": "Student",
+            "class_code": self.entries['class'].get().strip(),
+            "created_by": self.username
+        }
+
+        User.save_all(data)
+
         self.refresh_treeview()
         self.clear_entries()
-        messagebox.showinfo("Success", f"Student {student.name} added!")
+
+        messagebox.showinfo(
+            "Success",
+            f"Student account created!\nUsername: {roll_no}"
+        )
 
     def update_student(self):
         roll_no = self.entries['roll_no'].get().strip()
@@ -1459,10 +1500,11 @@ class AdminPage(tk.Tk):
         self.refresh_staff_list()
     
     def search_staff(self, event=None):
+        data = User.load_all()
         query = self.staff_search_var.get().strip().lower()
         for item in self.staff_tree.get_children():
             self.staff_tree.delete(item)
-        for username, info in User.data["users"].items():
+        for username, info in data["users"].items():
             if info.get("role") == "Staff":
                 if (query in username.lower() or query in info.get("created_by", "").lower()):
                     self.staff_tree.insert("", "end", values=(username, info.get("role", "Staff"), info.get("created_by", "system")))
@@ -1536,8 +1578,9 @@ class AdminPage(tk.Tk):
             )
         self.sort_treeview(self.staff_student_tree, "roll_no", False)
 
-    #STAFF METHODS
+    #Staff methods
     def delete_staff(self, parent):
+        data = User.load_all()
         selected = self.staff_tree.selection()
         if not selected:
             messagebox.showerror("Error", "Please select a staff member to delete.", parent=parent)
@@ -1549,10 +1592,10 @@ class AdminPage(tk.Tk):
             return
 
         #Remove staff and their students
-        if username in User.data["users"]:
-            User.data["users"].pop(username)
-            User.data["students"].pop(username, None)
-            User.save_data()
+        if username in data["users"]:
+            data["users"].pop(username)
+            data["students"].pop(username, None)
+            save_data()
             messagebox.showinfo("Deleted", f"Staff '{username}' and all their students have been deleted.", parent=parent)
             self.refresh_staff_list()
             for item in self.staff_student_tree.get_children():
@@ -1560,9 +1603,10 @@ class AdminPage(tk.Tk):
             self.clear_student_form()
     
     def refresh_staff_list(self):
+        data = User.load_all()
         for item in self.staff_tree.get_children():
             self.staff_tree.delete(item)
-        for username, info in User.data["users"].items():
+        for username, info in data["users"].items():
             if info.get("role") == "Staff":
                 self.staff_tree.insert("", "end", values=(username, info.get("role", "Staff"), info.get("created_by", "system")))
 
@@ -1612,17 +1656,21 @@ class AdminPage(tk.Tk):
         password_ent.pack(pady=5)
 
         def submit():
+            data = User.load_all()
             new_pass = password_ent.get().strip()
             if not new_pass:
                 messagebox.showerror("Error", "Password cannot be empty.", parent=win)
                 return
-            User.data["users"][username]["password"] = new_pass
+            pwd = hash_password(new_pass)
+
+            data["users"][username].update(pwd)
+            save_data()
             messagebox.showinfo("Success", f"Password updated for {username}", parent=win)
             win.destroy()
 
         tk.Button(win, text="Update", command=submit, bg="#0078D7", fg="white", width=15).pack(pady=20)
 
-    #STUDENT METHODS
+    #Student methods
     def delete_student(self, parent):
         selected_staff = self.staff_tree.selection()
         if not selected_staff:
@@ -1670,58 +1718,56 @@ class AdminPage(tk.Tk):
                 entry.insert(0, value)
     
     def admin_add_student(self, parent):
+        data = User.load_all()
+
         selected_staff = self.staff_tree.selection()
         if not selected_staff:
             messagebox.showerror("Error", "Select a staff member first.", parent=parent)
             return
-        
+
         staff_username = self.staff_tree.item(selected_staff[0])["values"][0]
 
         roll_no = self.admin_student_entries["roll_no"].get().strip()
-        if not roll_no:
-            messagebox.showerror("Error", "Roll No is required.", parent=parent)
-            return
-
         password = self.admin_student_entries["password"].get().strip()
-        if not password:
-            messagebox.showerror("Error", "Password is required.", parent=parent)
+
+        if not roll_no or not password:
+            messagebox.showerror("Error", "Roll No and Password are required.", parent=parent)
             return
 
-        #Check if student account already exists
-        if roll_no in User.data["users"]:
-            messagebox.showerror("Error", "A student account with this Roll No already exists.", parent=parent)
+        if roll_no in data["users"]:
+            messagebox.showerror("Error", "Student account already exists.", parent=parent)
             return
 
-        #Load staff's students
-        students = User.get_students(staff_username)
-        if roll_no in students:
-            messagebox.showerror("Error", "Student with this Roll No already exists under this staff.", parent=parent)
-            return
-
-        #Create student object
-        student = Student(
-            roll_no=roll_no,
-            name=self.admin_student_entries["name"].get().strip(),
-            class_code=self.admin_student_entries["class"].get().strip(),
-            contact=self.admin_student_entries["contact"].get().strip(),
-            address=self.admin_student_entries["address"].get().strip(),
-            gender=self.admin_student_entries["gender"].get().strip(),
-            dob=self.admin_student_entries["birthday"].get().strip()
-        )
-
-        #Save student under staff
-        students[roll_no] = student
-        User.save_students(staff_username, students)
-
-        #Create student login account
-        User.data["users"][roll_no] = {
-            "password": password,
-            "role": "student",
-            "owner": staff_username
+        #Create student profile
+        student = {
+            "roll_no": roll_no,
+            "name": self.admin_student_entries["name"].get().strip(),
+            "class": self.admin_student_entries["class"].get().strip(),
+            "contact": self.admin_student_entries["contact"].get().strip(),
+            "address": self.admin_student_entries["address"].get().strip(),
+            "gender": self.admin_student_entries["gender"].get().strip(),
+            "dob": self.admin_student_entries["birthday"].get().strip(),
+            "courses": []
         }
 
-        messagebox.showinfo("Success", f"Student '{student.name}' added and account created!", parent=parent)
+        data.setdefault("students", {})
+        data["students"].setdefault(staff_username, {})
+        data["students"][staff_username][roll_no] = student
 
+        #Create encrypted student account
+        pwd = hash_password(password)
+
+        data["users"][roll_no] = {
+            **pwd,
+            "role": "Student",
+            "class_code": student["class"],
+            "created_by": staff_username,
+            "bg_color": "#f0f4f7"
+        }
+
+        User.save_all(data)
+
+        messagebox.showinfo("Success", f"Student '{student['name']}' added!", parent=parent)
         self.show_staff_students()
         self.clear_student_form()
 

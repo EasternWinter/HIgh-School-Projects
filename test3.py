@@ -1578,7 +1578,7 @@ class AdminPage(tk.Tk):
             )
         self.sort_treeview(self.staff_student_tree, "roll_no", False)
 
-    #STAFF METHODS
+    #Staff methods
     def delete_staff(self, parent):
         data = User.load_all()
         selected = self.staff_tree.selection()
@@ -1661,13 +1661,16 @@ class AdminPage(tk.Tk):
             if not new_pass:
                 messagebox.showerror("Error", "Password cannot be empty.", parent=win)
                 return
-            data["users"][username]["password"] = new_pass
+            pwd = hash_password(new_pass)
+
+            data["users"][username].update(pwd)
+            save_data()
             messagebox.showinfo("Success", f"Password updated for {username}", parent=win)
             win.destroy()
 
         tk.Button(win, text="Update", command=submit, bg="#0078D7", fg="white", width=15).pack(pady=20)
 
-    #STUDENT METHODS
+    #Student methods
     def delete_student(self, parent):
         selected_staff = self.staff_tree.selection()
         if not selected_staff:
@@ -1716,58 +1719,55 @@ class AdminPage(tk.Tk):
     
     def admin_add_student(self, parent):
         data = User.load_all()
+
         selected_staff = self.staff_tree.selection()
         if not selected_staff:
             messagebox.showerror("Error", "Select a staff member first.", parent=parent)
             return
-        
+
         staff_username = self.staff_tree.item(selected_staff[0])["values"][0]
 
         roll_no = self.admin_student_entries["roll_no"].get().strip()
-        if not roll_no:
-            messagebox.showerror("Error", "Roll No is required.", parent=parent)
-            return
-
         password = self.admin_student_entries["password"].get().strip()
-        if not password:
-            messagebox.showerror("Error", "Password is required.", parent=parent)
+
+        if not roll_no or not password:
+            messagebox.showerror("Error", "Roll No and Password are required.", parent=parent)
             return
 
-        #Check if student account already exists
         if roll_no in data["users"]:
-            messagebox.showerror("Error", "A student account with this Roll No already exists.", parent=parent)
+            messagebox.showerror("Error", "Student account already exists.", parent=parent)
             return
 
-        #Load staff's students
-        students = User.get_students(staff_username)
-        if roll_no in students:
-            messagebox.showerror("Error", "Student with this Roll No already exists under this staff.", parent=parent)
-            return
-
-        #Create student object
-        student = Student(
-            roll_no=roll_no,
-            name=self.admin_student_entries["name"].get().strip(),
-            class_code=self.admin_student_entries["class"].get().strip(),
-            contact=self.admin_student_entries["contact"].get().strip(),
-            address=self.admin_student_entries["address"].get().strip(),
-            gender=self.admin_student_entries["gender"].get().strip(),
-            dob=self.admin_student_entries["birthday"].get().strip()
-        )
-
-        #Save student under staff
-        students[roll_no] = student
-        User.save_students(staff_username, students)
-
-        #Create student login account
-        data["users"][roll_no] = {
-            "password": password,
-            "role": "student",
-            "owner": staff_username
+        #Create student profile
+        student = {
+            "roll_no": roll_no,
+            "name": self.admin_student_entries["name"].get().strip(),
+            "class": self.admin_student_entries["class"].get().strip(),
+            "contact": self.admin_student_entries["contact"].get().strip(),
+            "address": self.admin_student_entries["address"].get().strip(),
+            "gender": self.admin_student_entries["gender"].get().strip(),
+            "dob": self.admin_student_entries["birthday"].get().strip(),
+            "courses": []
         }
 
-        messagebox.showinfo("Success", f"Student '{student.name}' added and account created!", parent=parent)
+        data.setdefault("students", {})
+        data["students"].setdefault(staff_username, {})
+        data["students"][staff_username][roll_no] = student
 
+        #Create encrypted student account
+        pwd = hash_password(password)
+
+        data["users"][roll_no] = {
+            **pwd,
+            "role": "Student",
+            "class_code": student["class"],
+            "created_by": staff_username,
+            "bg_color": "#f0f4f7"
+        }
+
+        User.save_all(data)
+
+        messagebox.showinfo("Success", f"Student '{student['name']}' added!", parent=parent)
         self.show_staff_students()
         self.clear_student_form()
 
