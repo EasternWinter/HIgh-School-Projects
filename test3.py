@@ -1027,12 +1027,13 @@ class StaffPage(tk.Tk):
         LoginRegister()
 
     def create_entry_widgets(self):
-        labels = ["Roll No", "Name", "Class", "Contact", "Address", "Gender", "Birthday"]
+        labels = ["Roll No", "Name", "Class", "Contact", "Address", "Gender", "Birthday", "Password"]
         self.entries = {}
         self.entry_labels = {}
 
         for i, label in enumerate(labels):
-            lbl = tk.Label(self.detail_frame, text=label, font=("Times New Roman", 17), bg=self.bg_color)
+            lbl = tk.Label(self.detail_frame, text=label,
+                        font=("Times New Roman", 17), bg=self.bg_color)
             lbl.grid(row=i, column=0, padx=2, pady=2)
             self.entry_labels[label.lower().replace(" ", "_")] = lbl
 
@@ -1045,14 +1046,18 @@ class StaffPage(tk.Tk):
                     self.detail_frame,
                     font=("Times New Roman", 15),
                     width=15,
-                    background='darkblue',
-                    foreground='white',
-                    borderwidth=2,
                     date_pattern='yyyy-mm-dd',
                     maxdate=date.today()
                 )
+
+            elif label == "Password":
+                entry = tk.Entry(self.detail_frame, bd=7,
+                                font=("Times New Roman", 17),
+                                width=12, show="*")
+
             else:
-                entry = tk.Entry(self.detail_frame, bd=7, font=("Times New Roman", 17), width=12)
+                entry = tk.Entry(self.detail_frame, bd=7,
+                                font=("Times New Roman", 17), width=12)
 
             entry.grid(row=i, column=1, padx=2, pady=2)
             self.entries[label.lower().replace(" ", "_")] = entry
@@ -1089,13 +1094,17 @@ class StaffPage(tk.Tk):
 
     def add_student(self):
         roll_no = self.entries['roll_no'].get().strip()
-        if not roll_no:
-            messagebox.showerror("Error", "Roll No is required")
+        password = self.entries['password'].get().strip()
+
+        if not roll_no or not password:
+            messagebox.showerror("Error", "Roll No and Password are required")
             return
+
         if roll_no in self.students:
             messagebox.showerror("Error", "Student already exists")
             return
 
+        # Create student profile
         student = Student(
             roll_no,
             self.entries['name'].get().strip(),
@@ -1105,11 +1114,33 @@ class StaffPage(tk.Tk):
             self.entries['gender'].get().strip(),
             self.entries['birthday'].get().strip()
         )
+
         self.students[roll_no] = student
         User.save_students(self.username, self.students)
+
+        #Create encrypted student account
+        data = User.load_all()
+        if "users" not in data:
+            data["users"] = {}
+
+        password_data = hash_password(password)
+
+        data["users"][roll_no] = {
+            **password_data,
+            "role": "Student",
+            "class_code": self.entries['class'].get().strip(),
+            "created_by": self.username
+        }
+
+        User.save_all(data)
+
         self.refresh_treeview()
         self.clear_entries()
-        messagebox.showinfo("Success", f"Student {student.name} added!")
+
+        messagebox.showinfo(
+            "Success",
+            f"Student account created!\nUsername: {roll_no}"
+        )
 
     def update_student(self):
         roll_no = self.entries['roll_no'].get().strip()

@@ -29,14 +29,13 @@
             "created_by": "system"
         },
         "1234": {
-            "password": "asdfasdf",
-            "role": "student",
-            "owner": "asdf"
-        },
-        "12345": {
-            "password": "789456123",
-            "role": "student",
-            "owner": "asdf"
+            "alg": "pbkdf2_sha256",
+            "iterations": 100000,
+            "salt": "zvbi7wqjZT0QI8uPrkdF3Q==",
+            "hash": "qwycnxYobaovES0lTMPMOGYfwuhgJNogEWYfaIT7cEY=",
+            "role": "Student",
+            "class_code": "ZPWB0S",
+            "created_by": "asdf"
         }
     },
     "students": {
@@ -51,34 +50,14 @@
                 "dob": "2025-12-11",
                 "courses": []
             },
-            "123456": {
-                "roll_no": "123456",
-                "name": "Wynn",
-                "class": "ZPWB0S",
-                "contact": "3326549870",
-                "address": "5640",
-                "gender": "Male",
-                "dob": "2025-12-11",
-                "courses": []
-            },
             "1234": {
                 "roll_no": "1234",
-                "name": "asdasd",
+                "name": "asdfg",
                 "class": "ZPWB0S",
-                "contact": "9876543210",
-                "address": "5564",
+                "contact": "1234567890",
+                "address": "1234",
                 "gender": "Male",
-                "dob": "2025-12-11",
-                "courses": []
-            },
-            "12345": {
-                "roll_no": "12345",
-                "name": "adfg",
-                "class": "ZPWB0S",
-                "contact": "0000",
-                "address": "2222",
-                "gender": "Female",
-                "dob": "2025-12-11",
+                "dob": "2025-12-15",
                 "courses": []
             }
         }
