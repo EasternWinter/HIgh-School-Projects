@@ -26,7 +26,8 @@
             "hash": "TD7EnsqHtbNFjAxBZBmuZIcCm8PQTRTcFPk8hzuAchw=",
             "role": "Admin",
             "bg_color": "#f0f4f7",
-            "created_by": "system"
+            "created_by": "system",
+            "theme": "light"
         },
         "1234": {
             "alg": "pbkdf2_sha256",
